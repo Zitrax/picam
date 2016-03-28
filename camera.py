@@ -5,6 +5,7 @@ import logging
 import os
 import picamera
 import re
+from subprocess import call
 import time
 
 
@@ -12,6 +13,11 @@ logging.basicConfig(filename="camera.log", level=logging.DEBUG)
 
 base_dir = "/home/pi/camera-images"
 latest = os.path.join(base_dir, "latest.jpg")
+
+def upload():
+    call(['/home/pi/go/bin/skicka', '-quiet', 'rm', '/birdcam/latest.jpg'])
+    if call(['/home/pi/go/bin/skicka', '-quiet', 'upload', '/home/pi/camera-images/latest.jpg', '/birdcam/latest.jpg']):
+        logging.warning("{}: Could not upload".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 
 def filenames(count):
     if os.path.exists(latest):
@@ -40,4 +46,5 @@ with picamera.PiCamera() as cam:
         if os.path.exists(latest):
             os.remove(latest)
         os.symlink(fn, latest)
+        upload()
         time.sleep(120)
