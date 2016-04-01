@@ -1,0 +1,11 @@
+[Unit]
+Description=Launches the birdcam
+After=network-online.target
+Documentation=https://github.com/Zitrax/picam
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+
+ExecStart=/home/pi/git/picam/camera.py
