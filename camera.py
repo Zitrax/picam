@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
+from  datetime import datetime, time
 from subprocess import call
-import datetime
+from time import sleep, strftime
 import logging
 import os
 import picamera
 import re
 import signal
-import time
 
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -49,15 +49,30 @@ def filenames(count):
         i += 1
         i %= count
 
+def in_between(start, end):
+    now = datetime.now().time()
+    if start <= end:
+        return start <= now < end
+    else: # over midnight e.g., 23:30-04:15
+        return start <= now or now < end
+
+
+def abortable_sleep(seconds, sh):
+    """Sleep for a given number of seconds, or until shutdown"""
+    total = 0
+    while total < seconds and not sh.shutdown:
+        sleep(1)
+        total += 1
+
 
 with picamera.PiCamera() as cam:
     shutdown_handler = ShutdownHandler()
     cam.annotate_text_size = 15
     logging.info("Starting")
     for fn in filenames(50):
-        if datetime.time(1,00) > datetime.datetime.now().time() > datetime.time(7,00):
+        if in_between(time(7), time(1)):
             cam.led = True
-            cam.annotate_text = time.strftime("%Y-%m-%d %H:%M:%S")
+            cam.annotate_text = strftime("%Y-%m-%d %H:%M:%S")
             logging.info("Capturing {}".format(fn))
             cam.capture(fn)
             cam.led = False
@@ -65,7 +80,7 @@ with picamera.PiCamera() as cam:
                 os.remove(latest)
             os.symlink(fn, latest)
             upload()
+        abortable_sleep(120, shutdown_handler)
         if shutdown_handler.shutdown:
             logging.info("Goodbye")
             break
-        time.sleep(2)  # Not sleeping very long so we can handle shutdown faster
