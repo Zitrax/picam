@@ -1,3 +1,6 @@
+# Place this file in /etc/systemd/system/
+# and run "sudo systemctl enable picam.service"
+
 [Unit]
 Description=Launches the birdcam
 After=network-online.target
